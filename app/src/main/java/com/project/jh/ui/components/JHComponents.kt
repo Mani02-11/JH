@@ -1,6 +1,8 @@
 package com.project.jh.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,35 +17,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.project.jh.ui.theme.JHPrimary
-import com.project.jh.ui.theme.JHSecondary
 
 @Composable
 fun JHCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    containerColor: Color = Color.White.copy(alpha = 0.05f),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    if (onClick != null) {
-        ElevatedCard(
-            onClick = onClick,
-            modifier = modifier,
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-        ) {
-            content()
-        }
-    } else {
-        ElevatedCard(
-            modifier = modifier,
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-        ) {
+    val cardModifier = modifier.fillMaxWidth()
+    val shape = RoundedCornerShape(24.dp)
+    
+    ElevatedCard(
+        onClick = onClick ?: {},
+        enabled = onClick != null,
+        modifier = cardModifier,
+        shape = shape,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = containerColor
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
             content()
         }
     }
@@ -54,20 +49,51 @@ fun JHButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = JHPrimary,
-    contentColor: Color = Color.White
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(50.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.height(56.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor
-        )
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
     ) {
-        Text(text = text, fontWeight = FontWeight.SemiBold)
+        Text(text = text, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
+}
+
+@Composable
+fun JHTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: ImageVector? = null,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier.fillMaxWidth(),
+        label = { Text(label) },
+        leadingIcon = leadingIcon?.let { { Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.primary) } },
+        shape = RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        ),
+        singleLine = singleLine
+    )
 }
 
 @Composable
@@ -75,17 +101,20 @@ fun SkillChip(
     skill: String,
     modifier: Modifier = Modifier
 ) {
-    SuggestionChip(
-        onClick = { },
-        label = { Text(skill, fontSize = 12.sp) },
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
         shape = RoundedCornerShape(8.dp),
-        modifier = modifier,
-        colors = SuggestionChipDefaults.suggestionChipColors(
-            containerColor = JHSecondary.copy(alpha = 0.1f),
-            labelColor = JHSecondary
-        ),
-        border = null
-    )
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+        modifier = modifier
+    ) {
+        Text(
+            text = skill,
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
 }
 
 @Composable
@@ -94,18 +123,28 @@ fun ProfileAvatar(
     modifier: Modifier = Modifier,
     size: Int = 40
 ) {
+    val backgroundColors = listOf(
+        Color(0xFF8E44AD), // Purple
+        Color(0xFFE91E63), // Pink
+        Color(0xFF2196F3), // Blue
+        Color(0xFF00BFA5)  // Teal
+    )
+    val colorIndex = (initials.firstOrNull()?.code ?: 0) % backgroundColors.size
+    val bgColor = backgroundColors[colorIndex]
+
     Box(
         modifier = modifier
             .size(size.dp)
             .clip(CircleShape)
-            .background(JHPrimary.copy(alpha = 0.1f)),
+            .background(bgColor.copy(alpha = 0.2f))
+            .border(BorderStroke(1.dp, bgColor.copy(alpha = 0.3f)), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = initials,
-            color = JHPrimary,
+            color = bgColor,
             fontWeight = FontWeight.Bold,
-            fontSize = (size / 2.5).sp
+            fontSize = (size / 2.2).sp
         )
     }
 }
@@ -117,16 +156,17 @@ fun StatusBadge(
 ) {
     val color = when (status.lowercase()) {
         "pending" -> Color(0xFFFBC02D)
-        "accepted", "active", "online" -> JHSecondary
-        "rejected" -> Color.Red
-        "completed" -> Color.Blue
+        "accepted", "active", "online" -> Color(0xFF4CAF50)
+        "rejected" -> Color(0xFFEF5350)
+        "completed" -> Color(0xFF42A5F5)
         else -> Color.Gray
     }
     
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(4.dp),
-        modifier = modifier
+        shape = RoundedCornerShape(8.dp),
+        modifier = modifier,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.2f))
     ) {
         Text(
             text = status,
@@ -157,14 +197,18 @@ fun EmptyStateView(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color.LightGray
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = title, style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier.padding(top = 8.dp)
         )
         if (actionText != null && onAction != null) {

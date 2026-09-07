@@ -1,122 +1,353 @@
 package com.project.jh.ui.screens
 
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.project.jh.ui.components.EmptyStateView
-import com.project.jh.ui.components.JHCard
+import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.components.StatusBadge
+import com.project.jh.ui.theme.JHPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RequestsScreen() {
+fun RequestsScreen(onNavigateToChat: (String) -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Received", "Sent")
+    
+    val auth = remember { FirebaseAuth.getInstance() }
+    val db = remember { FirebaseFirestore.getInstance() }
+    val currentUid = auth.currentUser?.uid ?: ""
+    
+    var receivedRequests by remember { mutableStateOf(listOf<RequestData>()) }
+    var sentRequests by remember { mutableStateOf(listOf<RequestData>()) }
+
+    LaunchedEffect(currentUid) {
+        if (currentUid.isNotEmpty()) {
+            // Listen for Received Requests where current user is provider
+            db.collection("requests")
+                .whereEqualTo("providerId", currentUid)
+                .addSnapshotListener { snapshot, _ ->
+                    if (snapshot != null) {
+                        receivedRequests = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(RequestData::class.java)?.copy(id = doc.id, requestId = doc.id)
+                        }.sortedByDescending { it.createdAt }
+                    }
+                }
+                
+            // Listen for Sent Requests where current user is requester
+            db.collection("requests")
+                .whereEqualTo("requesterId", currentUid)
+                .addSnapshotListener { snapshot, _ ->
+                    if (snapshot != null) {
+                        sentRequests = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(RequestData::class.java)?.copy(id = doc.id, requestId = doc.id)
+                        }.sortedByDescending { it.createdAt }
+                    }
+                }
+        }
+    }
+
+    var showReviewDialog by remember { mutableStateOf(false) }
+    var selectedRequestForReview by remember { mutableStateOf<RequestData?>(null) }
+
+    if (showReviewDialog && selectedRequestForReview != null) {
+        ReviewDialog(
+            requestId = selectedRequestForReview!!.id,
+            providerUid = selectedRequestForReview!!.providerId,
+            serviceTitle = selectedRequestForReview!!.serviceName,
+            onDismiss = { showReviewDialog = false },
+            onSuccess = { showReviewDialog = false }
+        )
+    }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Service Requests", fontWeight = FontWeight.Bold) }
+                    title = { Text("Service Requests", fontWeight = FontWeight.Bold, color = Color.White) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
-                TabRow(selectedTabIndex = selectedTab) {
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = Color.Transparent,
+                    contentColor = JHPrimary,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = JHPrimary
+                        )
+                    },
+                    divider = { HorizontalDivider(color = Color.White.copy(alpha = 0.05f)) }
+                ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
                             selected = selectedTab == index,
                             onClick = { selectedTab = index },
-                            text = { Text(title) }
+                            text = { 
+                                Text(
+                                    text = title,
+                                    color = if (selectedTab == index) JHPrimary else Color.Gray,
+                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                                ) 
+                            }
                         )
                     }
                 }
             }
         }
     ) { padding ->
-        if (selectedTab == 0) {
-            ReceivedRequests(modifier = Modifier.padding(padding))
+        val requests = if (selectedTab == 0) receivedRequests else sentRequests
+        
+        if (requests.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text(
+                    text = if (selectedTab == 0) "No service requests received yet." else "No requests sent yet.",
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+            }
         } else {
-            SentRequests(modifier = Modifier.padding(padding))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(requests) { request ->
+                    RequestCard(
+                        request = request, 
+                        isReceived = selectedTab == 0,
+                        onMessage = {
+                            val otherUid = if (selectedTab == 0) request.requesterId else request.providerId
+                            onNavigateToChat(otherUid)
+                        },
+                        onRate = {
+                            selectedRequestForReview = request
+                            showReviewDialog = true
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ReceivedRequests(modifier: Modifier) {
-    // Placeholder for data
-    val requests = listOf(
-        RequestItem("Arun Kumar", "Android App Development", "Pending", "28 Aug"),
-        RequestItem("Sneha Rao", "UI Design", "Accepted", "27 Aug")
-    )
+fun RequestCard(
+    request: RequestData, 
+    isReceived: Boolean,
+    onMessage: () -> Unit,
+    onRate: () -> Unit = {}
+) {
+    val db = FirebaseFirestore.getInstance()
+    val context = LocalContext.current
+    var otherUserName by remember { mutableStateOf(if (isReceived) request.requesterName else request.providerName) }
+    
+    LaunchedEffect(request) {
+        val otherUid = if (isReceived) request.requesterId else request.providerId
+        if (otherUid.isNotEmpty()) {
+            db.collection("users").document(otherUid).get()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        otherUserName = doc.getString("name") ?: otherUserName
+                    }
+                }
+        }
+    }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    val statusUpper = request.status.uppercase()
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)), RoundedCornerShape(20.dp))
     ) {
-        items(requests) { request ->
-            RequestCard(request, isReceived = true)
-        }
-    }
-}
-
-@Composable
-fun SentRequests(modifier: Modifier) {
-    EmptyStateView(
-        title = "No requests sent yet",
-        subtitle = "When you request a service, it will appear here.",
-        icon = Icons.Default.List
-    )
-}
-
-@Composable
-fun RequestCard(request: RequestItem, isReceived: Boolean) {
-    JHCard {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                ProfileAvatar(initials = request.name.take(1))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ProfileAvatar(initials = otherUserName.ifEmpty { "U" }.take(1))
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(request.name, fontWeight = FontWeight.Bold)
-                    Text(request.service, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(
+                        text = otherUserName.ifEmpty { "User" }, 
+                        fontWeight = FontWeight.ExtraBold, 
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = "Service: ${request.serviceName}", 
+                        style = MaterialTheme.typography.bodySmall, 
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
-                StatusBadge(status = request.status)
+                StatusBadge(status = statusUpper)
+            }
+
+            if (request.message.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    color = Color.White.copy(alpha = 0.05f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "\"${request.message}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.LightGray.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "I need help with my college project. Can we discuss the timeline?",
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1
-            )
-            
-            if (isReceived && request.status == "Pending") {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (isReceived && statusUpper == "PENDING") {
                     OutlinedButton(
-                        onClick = { },
+                        onClick = { 
+                            val now = System.currentTimeMillis()
+                            db.collection("requests").document(request.id).update(
+                                "status", "REJECTED",
+                                "updatedAt", now
+                            ).addOnSuccessListener {
+                                val notifId = db.collection("notifications").document().id
+                                val notif = NotificationData(
+                                    id = notifId,
+                                    notificationId = notifId,
+                                    recipientUid = request.requesterId,
+                                    title = "Request Declined",
+                                    description = "Your request for '${request.serviceName}' was declined.",
+                                    type = "request",
+                                    timestamp = now
+                                )
+                                db.collection("notifications").document(notifId).set(notif)
+                                Toast.makeText(context, "Request Rejected", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red.copy(alpha = 0.8f)),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
                     ) {
                         Text("Reject")
                     }
+
                     Button(
-                        onClick = { },
-                        modifier = Modifier.weight(1f)
+                        onClick = { 
+                            val now = System.currentTimeMillis()
+                            db.collection("requests").document(request.id).update(
+                                "status", "ACCEPTED",
+                                "updatedAt", now
+                            ).addOnSuccessListener {
+                                // Deterministic Chat ID creation
+                                val requester = request.requesterId
+                                val provider = request.providerId
+                                val chatId = listOf(requester, provider).sorted().joinToString("_")
+
+                                val chatData = mapOf(
+                                    "chatId" to chatId,
+                                    "participantIds" to listOf(requester, provider),
+                                    "lastMessage" to "Request Accepted for ${request.serviceName}",
+                                    "lastMessageSenderId" to provider,
+                                    "lastMessageTime" to now,
+                                    "createdAt" to now
+                                )
+                                db.collection("chats").document(chatId).set(chatData)
+
+                                // Send notification to requester
+                                val notifId = db.collection("notifications").document().id
+                                val notif = NotificationData(
+                                    id = notifId,
+                                    notificationId = notifId,
+                                    recipientUid = requester,
+                                    title = "Request Accepted! 🎉",
+                                    description = "Great news! Your request for '${request.serviceName}' was accepted.",
+                                    type = "acceptance",
+                                    timestamp = now
+                                )
+                                db.collection("notifications").document(notifId).set(notif)
+                                Toast.makeText(context, "Request Accepted! Chat is now open.", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = JHPrimary),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Accept")
                     }
                 }
+
+                if (statusUpper == "ACCEPTED") {
+                    Button(
+                        onClick = onMessage,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = JHPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open Chat")
+                    }
+                    
+                    if (isReceived) {
+                        Button(
+                            onClick = {
+                                val now = System.currentTimeMillis()
+                                db.collection("requests").document(request.id).update(
+                                    "status", "COMPLETED",
+                                    "updatedAt", now
+                                ).addOnSuccessListener {
+                                    val notifId = db.collection("notifications").document().id
+                                    val notif = NotificationData(
+                                        id = notifId,
+                                        notificationId = notifId,
+                                        recipientUid = request.requesterId,
+                                        title = "Service Completed",
+                                        description = "Your service '${request.serviceName}' has been marked completed. Please leave a review!",
+                                        type = "completed",
+                                        timestamp = now
+                                    )
+                                    db.collection("notifications").document(notifId).set(notif)
+                                    Toast.makeText(context, "Service Marked as Completed!", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Complete")
+                        }
+                    }
+                }
+
+                if (statusUpper == "COMPLETED" && !isReceived) {
+                    Button(
+                        onClick = onRate,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFBC02D)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Rate Service")
+                    }
+                }
             }
         }
     }
 }
-
-data class RequestItem(val name: String, val service: String, val status: String, val date: String)

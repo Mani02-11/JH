@@ -1,8 +1,8 @@
 package com.project.jh.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -19,7 +19,8 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector?
     object ServiceDetail : Screen("service_detail/{serviceId}", "Service")
     object UserDetail : Screen("user_detail/{userId}", "Student")
     object PostSkill : Screen("post_skill", "Offer Skill")
-    object RequestForm : Screen("request_form/{serviceId}", "Request Service")
+    object MyServices : Screen("my_services", "My Services")
+    object RequestForm : Screen("request_form/{serviceId}/{providerUid}", "Request Service")
     object EditProfile : Screen("edit_profile", "Edit Profile")
 }
 

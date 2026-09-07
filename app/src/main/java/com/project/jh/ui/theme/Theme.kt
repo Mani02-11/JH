@@ -1,6 +1,5 @@
 package com.project.jh.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -16,43 +15,23 @@ private val DarkColorScheme = darkColorScheme(
     primary = JHPrimary,
     onPrimary = Color.White,
     primaryContainer = JHPrimaryDark,
-    secondary = JHSecondary,
+    secondary = JHPrimary,
     onSecondary = Color.White,
-    tertiary = JHAccent,
-    background = JHBackgroundDark,
-    surface = JHSurfaceDark,
-    onBackground = JHOnBackgroundDark,
-    onSurface = JHOnBackgroundDark
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = JHPrimary,
-    onPrimary = Color.White,
-    secondary = JHSecondary,
-    onSecondary = Color.White,
-    tertiary = JHAccent,
-    background = JHBackgroundLight,
-    surface = JHSurfaceLight,
-    onBackground = JHOnBackgroundLight,
-    onSurface = JHOnBackgroundLight
+    background = JHSpaceBlack,
+    surface = Color.White.copy(alpha = 0.05f), // Transparent surface for glass
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 @Composable
 fun JHTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Force dark theme throughout the app
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // Force the dark color scheme to keep the "Space" aesthetic consistent
+    val colorScheme = DarkColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
