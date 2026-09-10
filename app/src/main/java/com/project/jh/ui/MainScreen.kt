@@ -128,7 +128,9 @@ fun MainContent(
             containerColor = Color.Transparent,
             bottomBar = {
                 Surface(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .navigationBarsPadding(),
                     shape = RoundedCornerShape(32.dp),
                     color = Color.White.copy(alpha = 0.08f),
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
@@ -175,7 +177,7 @@ fun MainContent(
                 NavHost(
                     navController = bottomNavController,
                     startDestination = Screen.Home.route,
-                    modifier = Modifier.padding(bottom = 12.dp) // Extra clearance for the floating bar
+                    modifier = Modifier.padding(bottom = 24.dp) // Extra clearance for the floating navigation bar
                 ) {
                     composable(Screen.Home.route) { 
                         HomeScreen(

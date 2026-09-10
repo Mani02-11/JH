@@ -110,7 +110,7 @@ fun ProfileScreen(
 
     val resolvedName = userProfile?.name?.ifBlank { null } 
         ?: if (isSelf) auth.currentUser?.displayName?.ifBlank { null } ?: auth.currentUser?.email?.substringBefore("@") ?: "Student" 
-        else "Student"
+        else userProfile?.email?.substringBefore("@") ?: "Student"
 
     val college = userProfile?.college ?: ""
     val course = userProfile?.course?.ifEmpty { userProfile?.department } ?: ""
@@ -309,7 +309,7 @@ fun ReviewsSection(reviews: List<ReviewData>) {
         Text("Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         Spacer(modifier = Modifier.height(12.dp))
         if (reviews.isEmpty()) {
-            Text("No reviews received yet", color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(vertical = 8.dp))
+            Text("No reviews received yet", color = Color.White.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
         } else {
             reviews.forEach { review ->
                 Surface(

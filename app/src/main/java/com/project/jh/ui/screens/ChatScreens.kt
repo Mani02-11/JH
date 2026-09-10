@@ -100,7 +100,7 @@ fun ChatListItem(otherUid: String, chat: ChatData, onClick: (String) -> Unit) {
                     if (doc.exists()) {
                         otherName = doc.getString("name")?.ifBlank { null } 
                             ?: doc.getString("email")?.substringBefore("@") 
-                            ?: "User"
+                            ?: "Student"
                     }
                 }
         }
@@ -165,7 +165,7 @@ fun ChatDetailScreen(userId: String, onBack: () -> Unit) {
                     if (doc.exists()) {
                         otherName = doc.getString("name")?.ifBlank { null } 
                             ?: doc.getString("email")?.substringBefore("@") 
-                            ?: "User"
+                            ?: "Student"
                     }
                 }
         }

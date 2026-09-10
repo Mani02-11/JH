@@ -41,6 +41,7 @@ fun ServiceDetailsScreen(
     val auth = remember { FirebaseAuth.getInstance() }
     val currentUid = auth.currentUser?.uid ?: ""
     var service by remember { mutableStateOf<ServiceData?>(null) }
+    var providerName by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
     val context = LocalContext.current
 
@@ -50,7 +51,23 @@ fun ServiceDetailsScreen(
                 .addSnapshotListener { doc, error ->
                     if (error != null) return@addSnapshotListener
                     if (doc != null && doc.exists()) {
-                        service = doc.toObject(ServiceData::class.java)?.copy(id = doc.id, serviceId = doc.id)
+                        val s = doc.toObject(ServiceData::class.java)?.copy(id = doc.id, serviceId = doc.id)
+                        service = s
+                        providerName = s?.providerName ?: "Student"
+                        
+                        // Fetch latest provider name from users collection for real-time accuracy
+                        s?.providerId?.let { pid ->
+                            if (pid.isNotEmpty()) {
+                                db.collection("users").document(pid).get()
+                                    .addOnSuccessListener { userDoc ->
+                                        val realName = userDoc.getString("name")?.ifBlank { null }
+                                            ?: userDoc.getString("email")?.substringBefore("@")
+                                        if (realName != null) {
+                                            providerName = realName
+                                        }
+                                    }
+                            }
+                        }
                     } else if (doc != null && !doc.exists()) {
                         service = null
                         if (!isLoading) {
@@ -174,10 +191,10 @@ fun ServiceDetailsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ProfileAvatar(initials = service?.providerName?.take(1) ?: "S", size = 36)
+                    ProfileAvatar(initials = providerName.ifEmpty { "S" }.take(1), size = 36)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text(service?.providerName ?: "Student", fontWeight = FontWeight.SemiBold, color = Color.White)
+                        Text(providerName.ifEmpty { "Student" }, fontWeight = FontWeight.SemiBold, color = Color.White)
                         Text("Category: ${service?.category}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                     }
                     Spacer(modifier = Modifier.weight(1f))
@@ -217,7 +234,6 @@ fun OfferSkillForm(onBack: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var experience by remember { mutableStateOf("") }
     var availability by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var estimatedTime by remember { mutableStateOf("") }
@@ -304,38 +320,73 @@ fun OfferSkillForm(onBack: () -> Unit) {
 
                         isLoading = true
                         val now = System.currentTimeMillis()
-                        val providerName = user?.displayName?.ifBlank { null } 
-                            ?: user?.email?.substringBefore("@") 
-                            ?: "Student Provider"
+                        
+                        // First fetch the latest name from Firestore users collection
+                        db.collection("users").document(uid).get()
+                            .addOnSuccessListener { userDoc ->
+                                val providerName = userDoc.getString("name")?.ifBlank { null }
+                                    ?: user?.displayName?.ifBlank { null }
+                                    ?: user?.email?.substringBefore("@")
+                                    ?: "Student Provider"
 
-                        val docRef = db.collection("services").document()
-                        val serviceId = docRef.id
+                                val docRef = db.collection("services").document()
+                                val serviceId = docRef.id
 
-                        val serviceData = hashMapOf(
-                            "serviceId" to serviceId,
-                            "providerId" to uid,
-                            "providerName" to providerName,
-                            "title" to title,
-                            "category" to category,
-                            "description" to description,
-                            "experience" to experience,
-                            "availability" to availability,
-                            "price" to price,
-                            "estimatedTime" to estimatedTime,
-                            "rating" to 0.0,
-                            "createdAt" to now,
-                            "timestamp" to now,
-                            "updatedAt" to now,
-                            "isActive" to true
-                        )
+                                val serviceData = hashMapOf(
+                                    "serviceId" to serviceId,
+                                    "providerId" to uid,
+                                    "providerName" to providerName,
+                                    "title" to title,
+                                    "category" to category,
+                                    "description" to description,
+                                    "availability" to availability,
+                                    "price" to price,
+                                    "estimatedTime" to estimatedTime,
+                                    "rating" to 0.0,
+                                    "createdAt" to now,
+                                    "timestamp" to now,
+                                    "updatedAt" to now,
+                                    "isActive" to true
+                                )
 
-                        // 1. Write to Firestore local cache immediately
-                        docRef.set(serviceData)
+                                // Write to Firestore local cache immediately
+                                docRef.set(serviceData)
 
-                        // 2. Complete UI immediately without blocking on network server ACK
-                        isLoading = false
-                        Toast.makeText(context, "Service Published Successfully!", Toast.LENGTH_SHORT).show()
-                        onBack()
+                                // Complete UI immediately
+                                isLoading = false
+                                Toast.makeText(context, "Service Published Successfully!", Toast.LENGTH_SHORT).show()
+                                onBack()
+                            }
+                            .addOnFailureListener {
+                                // Fallback if user doc fetch fails
+                                val providerName = user?.displayName?.ifBlank { null }
+                                    ?: user?.email?.substringBefore("@")
+                                    ?: "Student Provider"
+                                
+                                val docRef = db.collection("services").document()
+                                val serviceId = docRef.id
+
+                                val serviceData = hashMapOf(
+                                    "serviceId" to serviceId,
+                                    "providerId" to uid,
+                                    "providerName" to providerName,
+                                    "title" to title,
+                                    "category" to category,
+                                    "description" to description,
+                                    "availability" to availability,
+                                    "price" to price,
+                                    "estimatedTime" to estimatedTime,
+                                    "rating" to 0.0,
+                                    "createdAt" to now,
+                                    "timestamp" to now,
+                                    "updatedAt" to now,
+                                    "isActive" to true
+                                )
+                                docRef.set(serviceData)
+                                isLoading = false
+                                Toast.makeText(context, "Service Published!", Toast.LENGTH_SHORT).show()
+                                onBack()
+                            }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
