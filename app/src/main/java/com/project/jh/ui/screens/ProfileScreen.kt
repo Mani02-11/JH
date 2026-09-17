@@ -151,7 +151,7 @@ fun ProfileScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(bottom = 140.dp)
         ) {
             item {
                 ProfileHeader(resolvedName, college, course, year, availability, rating, reviewCount)
@@ -247,9 +247,9 @@ fun ProfileHeader(
 fun StatsRow(rating: Double, servicesCount: Int, reviewsCount: Int) {
     Surface(
         modifier = Modifier.padding(horizontal = 24.dp).fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White.copy(alpha = 0.08f),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White.copy(alpha = 0.05f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -313,18 +313,18 @@ fun ReviewsSection(reviews: List<ReviewData>) {
         } else {
             reviews.forEach { review ->
                 Surface(
-                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White.copy(alpha = 0.08f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+                    modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.05f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Rating: ${review.rating} ★", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFFBC02D))
+                            Text("Rating: ${review.rating} ★", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFFFBC02D))
                         }
                         if (review.comment.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(review.comment, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.95f))
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(review.comment, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.9f))
                         }
                     }
                 }

@@ -78,12 +78,6 @@ fun HomeScreen(
             }
 
             item {
-                CategorySection(onCategoryClick = { category ->
-                    onNavigateToDiscoverCategory(category)
-                })
-            }
-
-            item {
                 FeaturedServicesSection(searchQuery, onNavigateToService)
             }
         }
@@ -122,7 +116,10 @@ fun HomeTopBar(onNavigate: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.justhire_logo),
                 contentDescription = "Logo",
-                modifier = Modifier.padding(start = 16.dp).size(32.dp).clip(CircleShape)
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .size(34.dp) // Slight increase for zoom effect
+                    .clip(CircleShape)
             )
         },
         actions = {
@@ -312,12 +309,11 @@ fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(filtered) { service ->
                     ServiceCard(
-                        title = service.title,
-                        provider = service.providerName,
-                        rating = "%.1f".format(service.rating),
-                        price = service.price,
-                        onClick = { onNavigate(service.id) }
-                    )
+                    service = service,
+                    rating = "%.1f".format(service.rating),
+                    price = service.price,
+                    onClick = { onNavigate(service.id) }
+                )
                 }
             }
         }
@@ -325,7 +321,7 @@ fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
 }
 
 @Composable
-fun ServiceCard(title: String, provider: String, rating: String, price: String, onClick: () -> Unit) {
+fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: () -> Unit) {
     JHCard(
         modifier = Modifier.width(260.dp),
         onClick = onClick
@@ -343,11 +339,11 @@ fun ServiceCard(title: String, provider: String, rating: String, price: String, 
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                ProfileAvatar(initials = provider.ifEmpty { "S" }.take(1), size = 60)
+                ProfileAvatar(initials = service.category.ifEmpty { "S" }.take(1), size = 60)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = title,
+                text = service.title,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 style = MaterialTheme.typography.titleMedium,
@@ -355,7 +351,7 @@ fun ServiceCard(title: String, provider: String, rating: String, price: String, 
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "by $provider", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
+                Text(text = "by ${service.providerName}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(imageVector = Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFFBC02D))
                 Spacer(modifier = Modifier.width(2.dp))
@@ -369,6 +365,8 @@ fun ServiceCard(title: String, provider: String, rating: String, price: String, 
             Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
             Spacer(modifier = Modifier.height(8.dp))
+            Text(text = service.category, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = JHPrimary)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(text = "₹$price", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
         }
     }

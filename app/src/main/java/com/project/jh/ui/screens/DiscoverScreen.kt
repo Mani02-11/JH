@@ -178,7 +178,7 @@ fun PremiumServiceCard(service: ServiceData, onNavigate: (String) -> Unit) {
     JHCard(onClick = { onNavigate(service.id) }) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ProfileAvatar(initials = service.providerName.ifEmpty { "S" }.take(1), size = 50)
+                ProfileAvatar(initials = service.category.ifEmpty { "S" }.take(1), size = 50)
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -187,7 +187,7 @@ fun PremiumServiceCard(service: ServiceData, onNavigate: (String) -> Unit) {
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
-                    Text("by ${service.providerName}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f))
+                    Text("by ${service.providerName}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
                 }
                 Text("${"%.1f".format(service.rating)} ★", fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
             }
@@ -195,7 +195,7 @@ fun PremiumServiceCard(service: ServiceData, onNavigate: (String) -> Unit) {
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (service.category.isNotBlank()) {
-                    SkillChip(service.category)
+                    Text(text = service.category, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = JHPrimary)
                 }
                 Text("₹${service.price}", color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
