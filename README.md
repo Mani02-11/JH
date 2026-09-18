@@ -22,6 +22,24 @@
     *   *Authentication:* User login and secure access.
     *   *Cloud Firestore:* NoSQL real-time database for storing users, services, requests, chats, and reviews.
     *   *Cloud Messaging (FCM):* For reliable push notifications.
+ 
+## 🏗️ Architecture
+
+The application follows the **MVVM (Model–View–ViewModel)** architecture to separate the UI, business logic, and data operations.
+
+```text
+UI (Jetpack Compose)
+        ↓
+   ViewModel
+        ↓
+   Repository
+        ↓
+     Firebase
+   ┌────┴─────┐
+   │          │
+Authentication Firestore
+              +
+              FCM
 
 ## 📱 Application Flow
 
