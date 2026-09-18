@@ -171,13 +171,13 @@ fun MainContent(
             }
         ) { innerPadding ->
             Box(modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding())
             ) {
                 NavHost(
                     navController = bottomNavController,
                     startDestination = Screen.Home.route,
-                    modifier = Modifier.padding(bottom = 24.dp) // Extra clearance for the floating navigation bar
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     composable(Screen.Home.route) { 
                         HomeScreen(

@@ -1,6 +1,7 @@
 package com.project.jh.ui.screens
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 
 data class UserMetadata(
     @DocumentId val uid: String = "",
@@ -40,8 +41,11 @@ data class ServiceData(
     val updatedAt: Long = 0,
     val isActive: Boolean = true
 ) {
+    @get:Exclude
     val providerUid: String
         get() = providerId.ifEmpty { id }
+        
+    @get:Exclude
     val timestamp: Long
         get() = createdAt
 }
@@ -60,12 +64,19 @@ data class RequestData(
     val createdAt: Long = 0,
     val updatedAt: Long = 0
 ) {
+    @get:Exclude
     val requesterUid: String
         get() = requesterId
+        
+    @get:Exclude
     val providerUid: String
         get() = providerId
+        
+    @get:Exclude
     val serviceTitle: String
         get() = serviceName
+        
+    @get:Exclude
     val timestamp: Long
         get() = createdAt
 }
@@ -74,13 +85,17 @@ data class ChatData(
     @DocumentId val id: String = "",
     val chatId: String = id,
     val participantIds: List<String> = emptyList(),
+    val participantNames: Map<String, String> = emptyMap(),
     val lastMessage: String = "",
     val lastMessageSenderId: String = "",
     val lastMessageTime: Long = 0,
     val createdAt: Long = 0
 ) {
+    @get:Exclude
     val participants: List<String>
         get() = participantIds
+        
+    @get:Exclude
     val lastTimestamp: Long
         get() = lastMessageTime
 }
@@ -95,6 +110,7 @@ data class MessageData(
     val seen: Boolean = false,
     val type: String = "text"
 ) {
+    @get:Exclude
     val senderUid: String
         get() = senderId
 }

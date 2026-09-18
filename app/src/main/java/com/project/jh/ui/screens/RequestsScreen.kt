@@ -48,8 +48,21 @@ fun RequestsScreen(onNavigateToChat: (String) -> Unit) {
                 .addSnapshotListener { snapshot, _ ->
                     if (snapshot != null) {
                         receivedRequests = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(RequestData::class.java)?.copy(id = doc.id, requestId = doc.id)
-                        }.sortedByDescending { it.createdAt }
+                            RequestData(
+                                id = doc.id,
+                                requestId = doc.getString("requestId") ?: doc.id,
+                                requesterId = doc.getString("requesterId") ?: doc.getString("requesterUid") ?: "",
+                                requesterName = doc.getString("requesterName") ?: "",
+                                providerId = doc.getString("providerId") ?: doc.getString("providerUid") ?: "",
+                                providerName = doc.getString("providerName") ?: "",
+                                serviceId = doc.getString("serviceId") ?: "",
+                                serviceName = doc.getString("serviceName") ?: doc.getString("serviceTitle") ?: "",
+                                message = doc.getString("message") ?: "",
+                                status = doc.getString("status") ?: "PENDING",
+                                createdAt = doc.getLong("createdAt") ?: doc.getLong("timestamp") ?: 0L,
+                                updatedAt = doc.getLong("updatedAt") ?: 0L
+                            )
+                        }.sortedByDescending { it.createdAt.coerceAtLeast(it.timestamp) }
                     }
                 }
                 
@@ -59,8 +72,21 @@ fun RequestsScreen(onNavigateToChat: (String) -> Unit) {
                 .addSnapshotListener { snapshot, _ ->
                     if (snapshot != null) {
                         sentRequests = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(RequestData::class.java)?.copy(id = doc.id, requestId = doc.id)
-                        }.sortedByDescending { it.createdAt }
+                            RequestData(
+                                id = doc.id,
+                                requestId = doc.getString("requestId") ?: doc.id,
+                                requesterId = doc.getString("requesterId") ?: doc.getString("requesterUid") ?: "",
+                                requesterName = doc.getString("requesterName") ?: "",
+                                providerId = doc.getString("providerId") ?: doc.getString("providerUid") ?: "",
+                                providerName = doc.getString("providerName") ?: "",
+                                serviceId = doc.getString("serviceId") ?: "",
+                                serviceName = doc.getString("serviceName") ?: doc.getString("serviceTitle") ?: "",
+                                message = doc.getString("message") ?: "",
+                                status = doc.getString("status") ?: "PENDING",
+                                createdAt = doc.getLong("createdAt") ?: doc.getLong("timestamp") ?: 0L,
+                                updatedAt = doc.getLong("updatedAt") ?: 0L
+                            )
+                        }.sortedByDescending { it.createdAt.coerceAtLeast(it.timestamp) }
                     }
                 }
         }
@@ -97,7 +123,7 @@ fun RequestsScreen(onNavigateToChat: (String) -> Unit) {
                             color = JHPrimary
                         )
                     },
-                    divider = { HorizontalDivider(color = Color.White.copy(alpha = 0.05f)) }
+                    divider = { /* HorizontalDivider hidden */ }
                 ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
@@ -128,7 +154,7 @@ fun RequestsScreen(onNavigateToChat: (String) -> Unit) {
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 140.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(requests) { request ->
@@ -262,6 +288,10 @@ fun RequestCard(
                                 val chatData = mapOf(
                                     "chatId" to chatId,
                                     "participantIds" to listOf(requester, provider),
+                                    "participantNames" to mapOf(
+                                        requester to request.requesterName,
+                                        provider to request.providerName
+                                    ),
                                     "lastMessage" to "Request Accepted for ${request.serviceName}",
                                     "lastMessageSenderId" to provider,
                                     "lastMessageTime" to now,

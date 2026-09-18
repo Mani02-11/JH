@@ -202,7 +202,8 @@ fun ServiceDetailsScreen(
                     Text(" ${service?.rating}", fontWeight = FontWeight.Bold, color = Color.White)
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 20.dp), color = Color.White.copy(alpha = 0.1f))
+                // HorizontalDivider(modifier = Modifier.padding(vertical = 20.dp), color = Color.White.copy(alpha = 0.1f))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Text("Description", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))

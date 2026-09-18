@@ -1,5 +1,6 @@
 package com.project.jh.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -91,18 +92,34 @@ fun ChatListScreen(onNavigateToChat: (String) -> Unit) {
 @Composable
 fun ChatListItem(otherUid: String, chat: ChatData, onClick: (String) -> Unit) {
     val db = FirebaseFirestore.getInstance()
-    var otherName by remember { mutableStateOf("") }
+    var otherName by remember { 
+        mutableStateOf(chat.participantNames[otherUid]?.takeIf { it.isNotBlank() } ?: "Loading...") 
+    }
 
-    LaunchedEffect(otherUid) {
+    DisposableEffect(otherUid) {
         if (otherUid.isNotEmpty()) {
-            db.collection("users").document(otherUid).get()
-                .addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        otherName = doc.getString("name")?.ifBlank { null } 
+            val listener = db.collection("users").document(otherUid)
+                .addSnapshotListener { doc, e ->
+                    if (e != null) {
+                        Log.e("ChatNameResolver", "ChatListItem: Error fetching user $otherUid", e)
+                        return@addSnapshotListener
+                    }
+                    if (doc != null && doc.exists()) {
+                        val fetchedName = doc.getString("name")?.takeIf { it.isNotBlank() } 
                             ?: doc.getString("email")?.substringBefore("@") 
-                            ?: "Student"
+                        
+                        if (fetchedName != null) {
+                            otherName = fetchedName
+                        }
+                    } else {
+                        Log.w("ChatNameResolver", "ChatListItem: User document does NOT exist for UID = $otherUid")
+                        otherName = "Unknown User"
                     }
                 }
+            onDispose { listener.remove() }
+        } else {
+            otherName = "Self"
+            onDispose { }
         }
     }
 
@@ -154,28 +171,53 @@ fun ChatDetailScreen(userId: String, onBack: () -> Unit) {
     }
 
     var messages by remember { mutableStateOf(listOf<MessageData>()) }
-    var otherName by remember { mutableStateOf("") }
+    var otherName by remember { mutableStateOf("Loading...") }
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
-    LaunchedEffect(userId) {
+    DisposableEffect(userId) {
         if (userId.isNotEmpty()) {
-            db.collection("users").document(userId).get()
-                .addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        otherName = doc.getString("name")?.ifBlank { null } 
+            val listener = db.collection("users").document(userId)
+                .addSnapshotListener { doc, e ->
+                    if (e != null) {
+                        Log.e("ChatNameResolver", "ChatDetail: Error fetching user $userId", e)
+                        return@addSnapshotListener
+                    }
+                    if (doc != null && doc.exists()) {
+                        val fetchedName = doc.getString("name")?.takeIf { it.isNotBlank() } 
                             ?: doc.getString("email")?.substringBefore("@") 
-                            ?: "Student"
+                        
+                        if (fetchedName != null) {
+                            otherName = fetchedName
+                        }
+                    } else {
+                        Log.w("ChatNameResolver", "ChatDetail: User document does NOT exist for UID = $userId")
+                        otherName = "Unknown User"
                     }
                 }
+            onDispose { listener.remove() }
+        } else {
+            otherName = "Self"
+            onDispose { }
         }
+    }
 
+    LaunchedEffect(userId) {
         db.collection("chats").document(chatId).collection("messages")
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
                     messages = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(MessageData::class.java)?.copy(id = doc.id, messageId = doc.id)
+                        MessageData(
+                            id = doc.id,
+                            messageId = doc.getString("messageId") ?: doc.id,
+                            senderId = doc.getString("senderId") ?: doc.getString("senderUid") ?: "",
+                            receiverId = doc.getString("receiverId") ?: "",
+                            text = doc.getString("text") ?: "",
+                            timestamp = doc.getLong("timestamp") ?: 0L,
+                            seen = doc.getBoolean("seen") ?: false,
+                            type = doc.getString("type") ?: "text"
+                        )
                     }
                 }
             }

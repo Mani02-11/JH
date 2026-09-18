@@ -288,15 +288,17 @@ fun SkillsSection(skills: List<String>) {
     Column(modifier = Modifier.padding(horizontal = 24.dp)) {
         Text("Skills", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         Spacer(modifier = Modifier.height(12.dp))
-        Row(
+        androidx.compose.foundation.lazy.LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (skills.isEmpty()) {
-                Text("No skills added yet", color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+                item {
+                    Text("No skills added yet", color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+                }
             } else {
-                skills.forEach {
-                    SkillChip(it)
+                items(skills.size) { index ->
+                    SkillChip(skills[index])
                 }
             }
         }

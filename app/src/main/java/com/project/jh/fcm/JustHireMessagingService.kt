@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.project.jh.R
@@ -71,7 +72,13 @@ class JustHireMessagingService : FirebaseMessagingService() {
         fun updateFcmTokenInFirestore(token: String) {
             val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
             FirebaseFirestore.getInstance().collection("users").document(uid)
-                .update("fcmToken", token)
+                .set(
+                    mapOf(
+                        "fcmToken" to token,
+                        "lastActive" to System.currentTimeMillis()
+                    ),
+                    SetOptions.merge()
+                )
         }
     }
 }

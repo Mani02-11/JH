@@ -53,7 +53,8 @@ fun HomeScreen(
                 onClick = onNavigateToPostService,
                 containerColor = JHPrimary,
                 contentColor = Color.White,
-                shape = CircleShape
+                shape = CircleShape,
+                modifier = Modifier.padding(bottom = 80.dp) // Push FAB higher
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Offer Skill")
             }
@@ -63,8 +64,8 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 140.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 140.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 WelcomeHeader()
@@ -118,7 +119,7 @@ fun HomeTopBar(onNavigate: () -> Unit) {
                 contentDescription = "Logo",
                 modifier = Modifier
                     .padding(start = 16.dp)
-                    .size(34.dp) // Slight increase for zoom effect
+                    .size(36.dp) // Increased for 2% zoom effect
                     .clip(CircleShape)
             )
         },
@@ -306,7 +307,10 @@ fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
         if (filtered.isEmpty()) {
             Text("No services available yet.", color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(vertical = 12.dp))
         } else {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 12.dp)
+            ) {
                 items(filtered) { service ->
                     ServiceCard(
                     service = service,
@@ -339,7 +343,13 @@ fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: ()
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                ProfileAvatar(initials = service.category.ifEmpty { "S" }.take(1), size = 60)
+                Text(
+                    text = service.category.ifEmpty { "Service" },
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -362,9 +372,8 @@ fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: ()
                     color = Color.White
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
-            Spacer(modifier = Modifier.height(8.dp))
+            // HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+            // Spacer(modifier = Modifier.height(8.dp))
             Text(text = service.category, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = JHPrimary)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "₹$price", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
