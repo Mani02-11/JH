@@ -40,7 +40,7 @@ UI (Jetpack Compose)
 Authentication Firestore
               +
               FCM
-'''
+```
 ## 📱 Application Flow
 
 1.  **Login/Register:** Secure entry into the platform.
