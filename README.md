@@ -42,6 +42,29 @@ Authentication Firestore
               FCM
 ```
 ## 📱 Application Flow
+```text
+Login / Register
+       ↓
+Home / Discover
+       ↓
+Browse Services
+       ↓
+Service Details
+       ↓
+Request Service
+       ↓
+Provider Reviews Request
+       ↓
+Accept / Reject
+       ↓
+   If Accepted
+       ↓
+Real-Time Chat
+       ↓
+Service Completion
+       ↓
+Rating & Review
+```
 
 1.  **Login/Register:** Secure entry into the platform.
 2.  **Home/Discover:** Browse popular services, search by category or skill, and view recommended students.
