@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AutoAwesome
+import kotlinx.coroutines.launch
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -110,6 +112,27 @@ fun DiscoverScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search for a skill or service...", color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = JHPrimary) },
+                trailingIcon = {
+                    val scope = rememberCoroutineScope()
+                    var isSearching by remember { mutableStateOf(false) }
+                    
+                    if (isSearching) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 12.dp), color = JHPrimary, strokeWidth = 2.dp)
+                    } else {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotBlank()) {
+                                isSearching = true
+                                scope.launch {
+                                    val suggestedCategory = com.project.jh.ui.AiService.suggestServiceCategory(searchQuery)
+                                    selectedCategory = suggestedCategory
+                                    isSearching = false
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = "AI Smart Search", tint = JHPrimary)
+                        }
+                    }
+                },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = JHPrimary,

@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.messaging.FirebaseMessaging
 import com.project.jh.ui.MainScreen
 import com.project.jh.ui.theme.JHTheme
@@ -20,6 +21,7 @@ import com.project.jh.ui.theme.JHTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MobileAds.initialize(this) {}
         enableEdgeToEdge()
         setContent {
             JHTheme {

@@ -29,6 +29,8 @@ import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.components.StatusBadge
 import com.project.jh.ui.theme.JHPrimary
 import com.project.jh.ui.theme.JHSecondary
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.AutoAwesome
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -296,6 +298,37 @@ fun OfferSkillForm(onBack: () -> Unit) {
             }
 
             JHTextField(value = description, onValueChange = { description = it }, label = "Description", singleLine = false)
+            
+            // AI Description Enhancer
+            val scope = rememberCoroutineScope()
+            var isEnhancing by remember { mutableStateOf(false) }
+            
+            Button(
+                onClick = {
+                    if (title.isBlank() || category.isBlank()) {
+                        Toast.makeText(context, "Please enter title and select category first", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    isEnhancing = true
+                    scope.launch {
+                        val enhancedDesc = com.project.jh.ui.AiService.enhanceServiceDescription(title, category, description)
+                        description = enhancedDesc
+                        isEnhancing = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = JHPrimary.copy(alpha = 0.2f)),
+                border = BorderStroke(1.dp, JHPrimary)
+            ) {
+                if (isEnhancing) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = JHPrimary)
+                } else {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = JHPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Enhance Description with AI", color = JHPrimary, fontWeight = FontWeight.Bold)
+                }
+            }
+
             JHTextField(value = availability, onValueChange = { availability = it }, label = "Availability (e.g. Weekends / Evenings)")
             JHTextField(value = price, onValueChange = { price = it }, label = "Price (₹)")
             JHTextField(value = estimatedTime, onValueChange = { estimatedTime = it }, label = "Estimated Completion Time (e.g. 2 Days)")

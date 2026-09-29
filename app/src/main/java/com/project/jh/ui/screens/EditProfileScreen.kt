@@ -22,6 +22,13 @@ import com.google.firebase.firestore.SetOptions
 import com.project.jh.ui.components.JHButton
 import com.project.jh.ui.components.JHTextField
 import com.project.jh.ui.theme.JHPrimary
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.AutoAwesome
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,6 +129,36 @@ fun EditProfileScreen(onBack: () -> Unit) {
                 label = "Bio / About Me",
                 singleLine = false
             )
+
+            // AI Bio Generator Button
+            val scope = rememberCoroutineScope()
+            var isGeneratingBio by remember { mutableStateOf(false) }
+            
+            Button(
+                onClick = {
+                    if (skills.isBlank() || course.isBlank()) {
+                        Toast.makeText(context, "Please enter course and skills first", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    isGeneratingBio = true
+                    scope.launch {
+                        val generatedBio = com.project.jh.ui.AiService.generateBio(skills, course)
+                        bio = generatedBio
+                        isGeneratingBio = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = JHPrimary.copy(alpha = 0.2f)),
+                border = BorderStroke(1.dp, JHPrimary)
+            ) {
+                if (isGeneratingBio) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = JHPrimary)
+                } else {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = JHPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Auto-generate bio using AI", color = JHPrimary, fontWeight = FontWeight.Bold)
+                }
+            }
 
             JHTextField(
                 value = skills,
