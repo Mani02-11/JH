@@ -128,7 +128,8 @@ fun MainContent(
             containerColor = Color.Transparent,
             bottomBar = {
                 Column {
-                    com.project.jh.ui.components.AdMobBanner()
+                    // Temporarily hiding AdMob banner for testing
+                    // com.project.jh.ui.components.AdMobBanner()
                     Surface(
                         modifier = Modifier
                             .padding(16.dp)
