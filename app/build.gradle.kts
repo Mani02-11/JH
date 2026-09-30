@@ -74,6 +74,8 @@ dependencies {
     implementation(libs.google.generativeai)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.android)
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.11")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.11")
     implementation(libs.play.services.ads)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
