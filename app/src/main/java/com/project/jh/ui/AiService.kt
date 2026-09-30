@@ -7,30 +7,15 @@ import kotlinx.coroutines.withContext
 
 object AiService {
 
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
-        apiKey = BuildConfig.GEMINI_API_KEY
-    )
-
-    suspend fun generateBio(skills: String, course: String): String {
-        if (BuildConfig.GEMINI_API_KEY.isEmpty()) return "AI is not configured. Please add GEMINI_API_KEY to local.properties."
-        
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = """
-                    You are a professional profile bio generator for a student freelancer platform called JustHire.
-                    The user has the following skills: $skills.
-                    The user is studying: $course.
-                    Generate a short, professional, and catchy bio (max 3 sentences) that highlights their skills and readiness to take on projects.
-                    Output only the bio text.
-                """.trimIndent()
-                
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: "Failed to generate bio."
-            } catch (e: Exception) {
-                e.printStackTrace()
-                "Error generating bio: ${e.message}"
-            }
+    private val generativeModel: GenerativeModel? by lazy {
+        try {
+            GenerativeModel(
+                modelName = "gemini-1.5-flash",
+                apiKey = BuildConfig.GEMINI_API_KEY
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
@@ -39,6 +24,7 @@ object AiService {
 
         return withContext(Dispatchers.IO) {
             try {
+                val model = generativeModel ?: return@withContext currentDescription
                 val prompt = """
                     You are an expert copywriter for a freelancer platform called JustHire.
                     A user wants to offer a service with the title: "$title" in the category: "$category".
@@ -49,7 +35,7 @@ object AiService {
                     Keep it under 150 words. Do not use placeholders like [Your Name].
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(prompt)
+                val response = model.generateContent(prompt)
                 response.text?.trim() ?: currentDescription
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -63,6 +49,7 @@ object AiService {
 
         return withContext(Dispatchers.IO) {
             try {
+                val model = generativeModel ?: return@withContext "All"
                 val prompt = """
                     A user on a freelancer platform is searching for: "$query".
                     The available categories are: "Programming", "Design", "Tutoring", "Photography", "Video Editing", "Web Dev", "Other".
@@ -70,7 +57,7 @@ object AiService {
                     Respond ONLY with the exact category name from the list above. If none match well, respond with "Other".
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(prompt)
+                val response = model.generateContent(prompt)
                 val category = response.text?.trim() ?: "All"
                 
                 val validCategories = listOf("Programming", "Design", "Tutoring", "Photography", "Video Editing", "Web Dev", "Other")

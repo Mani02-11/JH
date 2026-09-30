@@ -130,36 +130,6 @@ fun EditProfileScreen(onBack: () -> Unit) {
                 singleLine = false
             )
 
-            // AI Bio Generator Button
-            val scope = rememberCoroutineScope()
-            var isGeneratingBio by remember { mutableStateOf(false) }
-            
-            Button(
-                onClick = {
-                    if (skills.isBlank() || course.isBlank()) {
-                        Toast.makeText(context, "Please enter course and skills first", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    isGeneratingBio = true
-                    scope.launch {
-                        val generatedBio = com.project.jh.ui.AiService.generateBio(skills, course)
-                        bio = generatedBio
-                        isGeneratingBio = false
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = JHPrimary.copy(alpha = 0.2f)),
-                border = BorderStroke(1.dp, JHPrimary)
-            ) {
-                if (isGeneratingBio) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = JHPrimary)
-                } else {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = JHPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Auto-generate bio using AI", color = JHPrimary, fontWeight = FontWeight.Bold)
-                }
-            }
-
             JHTextField(
                 value = skills,
                 onValueChange = { skills = it },
