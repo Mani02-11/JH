@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.project.jh.fcm.FcmNotificationHelper
 import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.theme.JHPrimary
 
@@ -174,6 +175,7 @@ fun ChatDetailScreen(userId: String, onBack: () -> Unit) {
     var otherName by remember { mutableStateOf("Loading...") }
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     DisposableEffect(userId) {
         if (userId.isNotEmpty()) {
@@ -283,7 +285,8 @@ fun ChatDetailScreen(userId: String, onBack: () -> Unit) {
                         onClick = {
                             val textToSend = inputText.trim()
                             if (textToSend.isNotBlank()) {
-                                sendMessage(db, chatId, currentUid, userId, textToSend)
+                                val ctx = context
+                                sendMessage(ctx, db, chatId, currentUid, userId, textToSend)
                                 inputText = ""
                             }
                         },
@@ -357,7 +360,7 @@ fun MessageBubble(message: MessageData, isMine: Boolean) {
     }
 }
 
-private fun sendMessage(db: FirebaseFirestore, chatId: String, senderId: String, receiverId: String, text: String) {
+private fun sendMessage(context: android.content.Context, db: FirebaseFirestore, chatId: String, senderId: String, receiverId: String, text: String) {
     val timestamp = System.currentTimeMillis()
     val messageId = db.collection("chats").document(chatId).collection("messages").document().id
     val message = MessageData(
@@ -384,15 +387,13 @@ private fun sendMessage(db: FirebaseFirestore, chatId: String, senderId: String,
     db.collection("chats").document(chatId).set(chatUpdate)
 
     // Send Notification
-    val notifId = db.collection("notifications").document().id
-    val notif = NotificationData(
-        id = notifId,
-        notificationId = notifId,
+    FcmNotificationHelper.sendNotificationToUser(
+        context = context,
         recipientUid = receiverId,
         title = "New Message",
         description = text,
         type = "message",
-        timestamp = timestamp
+        senderUid = senderId,
+        extraData = mapOf("chatId" to chatId)
     )
-    db.collection("notifications").document(notifId).set(notif)
 }

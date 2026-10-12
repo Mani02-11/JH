@@ -2,6 +2,7 @@ package com.project.jh.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,18 +18,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.project.jh.fcm.FcmNotificationHelper
 import com.project.jh.ui.components.JHButton
 import com.project.jh.ui.components.JHTextField
 import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.components.StatusBadge
 import com.project.jh.ui.theme.JHPrimary
 import com.project.jh.ui.theme.JHSecondary
+import com.project.jh.ui.utils.getCategoryDrawable
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.AutoAwesome
 
@@ -167,18 +172,16 @@ fun ServiceDetailsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(JHPrimary.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
+                        .clip(RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.TopEnd
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.Work,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = JHPrimary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Image(
+                        painter = painterResource(id = getCategoryDrawable(service?.category ?: "")),
+                        contentDescription = service?.category,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(modifier = Modifier.padding(12.dp)) {
                         StatusBadge(status = if (service!!.isActive) "Active" else "Disabled")
                     }
                 }
@@ -534,20 +537,17 @@ fun RequestServiceForm(
                             updatedAt = now
                         )
 
-                        // Write request & notification to Firestore local cache immediately
+                        // Write request & notification to Firestore
                         docRef.set(requestData)
 
-                        val notificationId = db.collection("notifications").document().id
-                        val notification = NotificationData(
-                            id = notificationId,
-                            notificationId = notificationId,
+                        FcmNotificationHelper.sendNotificationToUser(
+                            context = context,
                             recipientUid = providerUid,
                             title = "New Service Request",
                             description = "$name wants to hire you for '$serviceTitle'.",
                             type = "request",
-                            timestamp = now
+                            senderUid = user?.uid ?: ""
                         )
-                        db.collection("notifications").document(notificationId).set(notification)
 
                         // Complete UI immediately
                         isSubmitting = false

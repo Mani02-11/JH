@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import com.project.jh.ui.components.JHCard
 import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.components.SkillChip
 import com.project.jh.ui.theme.JHPrimary
+import com.project.jh.ui.utils.getCategoryDrawable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +83,12 @@ fun HomeScreen(
             item {
                 FeaturedServicesSection(searchQuery, onNavigateToService)
             }
+
+            // Temporarily hidden Ads
+            // item {
+            //     Spacer(modifier = Modifier.height(8.dp))
+            //     com.project.jh.ui.components.AdMobBanner()
+            // }
         }
     }
 }
@@ -331,26 +339,15 @@ fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: ()
         onClick = onClick
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Box(
+            Image(
+                painter = painterResource(id = getCategoryDrawable(service.category)),
+                contentDescription = service.category,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        brush = Brush.verticalGradient(
-                            listOf(JHPrimary.copy(alpha = 0.3f), Color.Transparent)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = service.category.ifEmpty { "Service" },
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
+                    .clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Crop
+            )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = service.title,

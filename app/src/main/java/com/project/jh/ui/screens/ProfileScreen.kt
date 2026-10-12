@@ -1,5 +1,7 @@
 package com.project.jh.ui.screens
 
+import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -17,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +28,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.project.jh.ui.components.ProfileAvatar
+import com.project.jh.ui.components.RewardedAdManager
 import com.project.jh.ui.components.SkillChip
 import com.project.jh.ui.theme.JHPrimary
 
@@ -160,6 +165,13 @@ fun ProfileScreen(
             item {
                 StatsRow(rating, userServicesCount, reviewCount)
             }
+
+            // Temporarily hidden Earn JustHire Credits / Rewarded Ad
+            // if (isSelf) {
+            //     item {
+            //         RewardedAdSection()
+            //     }
+            // }
             
             item {
                 BioSection(bio)
@@ -330,6 +342,73 @@ fun ReviewsSection(reviews: List<ReviewData>) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun RewardedAdSection() {
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        RewardedAdManager.loadAd(context)
+    }
+
+    Surface(
+        modifier = Modifier
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = JHPrimary.copy(alpha = 0.15f),
+        border = BorderStroke(1.dp, JHPrimary.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.CardGiftcard,
+                contentDescription = null,
+                tint = JHPrimary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Earn JustHire Credits",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "Watch a quick video ad to boost your profile",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+            Button(
+                onClick = {
+                    val activity = context as? Activity
+                    if (activity != null) {
+                        RewardedAdManager.showAd(
+                            activity = activity,
+                            onRewardEarned = { reward ->
+                                Toast.makeText(
+                                    context,
+                                    "🎉 Reward Earned: +${reward.amount} Credits!",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        )
+                    } else {
+                        Toast.makeText(context, "Ad loading... Please try again in a moment", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = JHPrimary),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Watch", fontWeight = FontWeight.Bold)
             }
         }
     }

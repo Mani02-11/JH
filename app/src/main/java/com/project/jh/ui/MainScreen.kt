@@ -127,18 +127,15 @@ fun MainContent(
         Scaffold(
             containerColor = Color.Transparent,
             bottomBar = {
-                Column {
-                    // Temporarily hiding AdMob banner for testing
-                    // com.project.jh.ui.components.AdMobBanner()
-                    Surface(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .navigationBarsPadding(),
-                        shape = RoundedCornerShape(32.dp),
-                        color = Color.White.copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
-                        shadowElevation = 0.dp
-                    ) {
+                Surface(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .navigationBarsPadding(),
+                    shape = RoundedCornerShape(32.dp),
+                    color = Color.White.copy(alpha = 0.08f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                    shadowElevation = 0.dp
+                ) {
                     NavigationBar(
                         containerColor = Color.Transparent,
                         tonalElevation = 0.dp
@@ -170,7 +167,6 @@ fun MainContent(
                             )
                         }
                     }
-                }
                 }
             }
         ) { innerPadding ->

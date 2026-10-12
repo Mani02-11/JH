@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.project.jh.fcm.FcmNotificationHelper
 import com.project.jh.ui.components.ProfileAvatar
 import com.project.jh.ui.components.StatusBadge
 import com.project.jh.ui.theme.JHPrimary
@@ -247,21 +248,19 @@ fun RequestCard(
                     OutlinedButton(
                         onClick = { 
                             val now = System.currentTimeMillis()
+                            val currentSenderUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                             db.collection("requests").document(request.id).update(
                                 "status", "REJECTED",
                                 "updatedAt", now
                             ).addOnSuccessListener {
-                                val notifId = db.collection("notifications").document().id
-                                val notif = NotificationData(
-                                    id = notifId,
-                                    notificationId = notifId,
+                                FcmNotificationHelper.sendNotificationToUser(
+                                    context = context,
                                     recipientUid = request.requesterId,
                                     title = "Request Declined",
                                     description = "Your request for '${request.serviceName}' was declined.",
                                     type = "request",
-                                    timestamp = now
+                                    senderUid = currentSenderUid
                                 )
-                                db.collection("notifications").document(notifId).set(notif)
                                 Toast.makeText(context, "Request Rejected", Toast.LENGTH_SHORT).show()
                             }
                         },
@@ -300,17 +299,14 @@ fun RequestCard(
                                 db.collection("chats").document(chatId).set(chatData)
 
                                 // Send notification to requester
-                                val notifId = db.collection("notifications").document().id
-                                val notif = NotificationData(
-                                    id = notifId,
-                                    notificationId = notifId,
+                                FcmNotificationHelper.sendNotificationToUser(
+                                    context = context,
                                     recipientUid = requester,
                                     title = "Request Accepted! 🎉",
                                     description = "Great news! Your request for '${request.serviceName}' was accepted.",
                                     type = "acceptance",
-                                    timestamp = now
+                                    senderUid = provider
                                 )
-                                db.collection("notifications").document(notifId).set(notif)
                                 Toast.makeText(context, "Request Accepted! Chat is now open.", Toast.LENGTH_SHORT).show()
                             }
                         },
@@ -342,17 +338,14 @@ fun RequestCard(
                                     "status", "COMPLETED",
                                     "updatedAt", now
                                 ).addOnSuccessListener {
-                                    val notifId = db.collection("notifications").document().id
-                                    val notif = NotificationData(
-                                        id = notifId,
-                                        notificationId = notifId,
+                                    FcmNotificationHelper.sendNotificationToUser(
+                                        context = context,
                                         recipientUid = request.requesterId,
                                         title = "Service Completed",
                                         description = "Your service '${request.serviceName}' has been marked completed. Please leave a review!",
                                         type = "completed",
-                                        timestamp = now
+                                        senderUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
                                     )
-                                    db.collection("notifications").document(notifId).set(notif)
                                     Toast.makeText(context, "Service Marked as Completed!", Toast.LENGTH_SHORT).show()
                                 }
                             },
