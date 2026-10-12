@@ -127,7 +127,7 @@ fun HomeTopBar(onNavigate: () -> Unit) {
                 contentDescription = "Logo",
                 modifier = Modifier
                     .padding(start = 16.dp)
-                    .size(36.dp) // Increased for 2% zoom effect
+                    .size(38.dp) // Zoomed 5% from 36dp
                     .clip(CircleShape)
             )
         },
