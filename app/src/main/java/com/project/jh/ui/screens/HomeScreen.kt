@@ -125,9 +125,10 @@ fun HomeTopBar(onNavigate: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.justhire_logo),
                 contentDescription = "Logo",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .padding(start = 16.dp)
-                    .size(38.dp) // Zoomed 5% from 36dp
+                    .size(42.dp)
                     .clip(CircleShape)
             )
         },
