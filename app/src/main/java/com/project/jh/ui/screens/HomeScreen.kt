@@ -2,7 +2,6 @@ package com.project.jh.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,7 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -31,7 +29,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.project.jh.R
 import com.project.jh.ui.components.JHCard
 import com.project.jh.ui.components.ProfileAvatar
-import com.project.jh.ui.components.SkillChip
 import com.project.jh.ui.theme.JHPrimary
 import com.project.jh.ui.utils.getCategoryDrawable
 
@@ -81,14 +78,8 @@ fun HomeScreen(
             }
 
             item {
-                FeaturedServicesSection(searchQuery, onNavigateToService)
+                UserPostedServicesSection(searchQuery, onNavigateToService)
             }
-
-            // Temporarily hidden Ads
-            // item {
-            //     Spacer(modifier = Modifier.height(8.dp))
-            //     com.project.jh.ui.components.AdMobBanner()
-            // }
         }
     }
 }
@@ -127,8 +118,8 @@ fun HomeTopBar(onNavigate: () -> Unit) {
                 contentDescription = "Logo",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(42.dp)
+                    .padding(start = 12.dp)
+                    .size(46.dp) // Zoomed in to fill and fit circle perfectly
                     .clip(CircleShape)
             )
         },
@@ -261,40 +252,45 @@ fun CategorySection(onCategoryClick: (String) -> Unit) {
 }
 
 @Composable
-fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
+fun UserPostedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
+    val auth = remember { FirebaseAuth.getInstance() }
     val db = remember { FirebaseFirestore.getInstance() }
+    val currentUid = auth.currentUser?.uid ?: ""
     var services by remember { mutableStateOf(listOf<ServiceData>()) }
 
-    LaunchedEffect(Unit) {
-        db.collection("services")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                if (snapshot != null) {
-                    services = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            doc.toObject(ServiceData::class.java)?.copy(id = doc.id, serviceId = doc.id)
-                        } catch (ex: Exception) {
-                            ServiceData(
-                                id = doc.id,
-                                serviceId = doc.getString("serviceId") ?: doc.id,
-                                providerId = doc.getString("providerId") ?: doc.getString("providerUid") ?: "",
-                                providerName = doc.getString("providerName") ?: "Student",
-                                title = doc.getString("title") ?: "",
-                                category = doc.getString("category") ?: "",
-                                description = doc.getString("description") ?: "",
-                                experience = doc.getString("experience") ?: "",
-                                availability = doc.getString("availability") ?: "Available",
-                                price = doc.getString("price") ?: "",
-                                estimatedTime = doc.getString("estimatedTime") ?: "",
-                                rating = doc.getDouble("rating") ?: 0.0,
-                                createdAt = doc.getLong("createdAt") ?: doc.getLong("timestamp") ?: 0L,
-                                updatedAt = doc.getLong("updatedAt") ?: 0L,
-                                isActive = doc.getBoolean("isActive") ?: true
-                            )
-                        }
-                    }.filter { it.isActive }
+    LaunchedEffect(currentUid) {
+        if (currentUid.isNotEmpty()) {
+            db.collection("services")
+                .whereEqualTo("providerId", currentUid)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) return@addSnapshotListener
+                    if (snapshot != null) {
+                        services = snapshot.documents.mapNotNull { doc ->
+                            try {
+                                doc.toObject(ServiceData::class.java)?.copy(id = doc.id, serviceId = doc.id)
+                            } catch (ex: Exception) {
+                                ServiceData(
+                                    id = doc.id,
+                                    serviceId = doc.getString("serviceId") ?: doc.id,
+                                    providerId = doc.getString("providerId") ?: doc.getString("providerUid") ?: "",
+                                    providerName = doc.getString("providerName") ?: "Student",
+                                    title = doc.getString("title") ?: "",
+                                    category = doc.getString("category") ?: "",
+                                    description = doc.getString("description") ?: "",
+                                    experience = doc.getString("experience") ?: "",
+                                    availability = doc.getString("availability") ?: "Available",
+                                    price = doc.getString("price") ?: "",
+                                    estimatedTime = doc.getString("estimatedTime") ?: "",
+                                    rating = doc.getDouble("rating") ?: 0.0,
+                                    createdAt = doc.getLong("createdAt") ?: doc.getLong("timestamp") ?: 0L,
+                                    updatedAt = doc.getLong("updatedAt") ?: 0L,
+                                    isActive = doc.getBoolean("isActive") ?: true
+                                )
+                            }
+                        }.filter { it.isActive }
+                    }
                 }
-            }
+        }
     }
 
     val filtered = if (searchQuery.isBlank()) services else {
@@ -307,26 +303,27 @@ fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
 
     Column {
         Text(
-            text = "Popular Services",
+            text = "My Posted Services",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
         )
         Spacer(modifier = Modifier.height(12.dp))
         if (filtered.isEmpty()) {
-            Text("No services available yet.", color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(vertical = 12.dp))
+            Text(
+                text = "You haven't posted any services yet. Tap + to offer a skill!",
+                color = Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
         } else {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 12.dp)
-            ) {
-                items(filtered) { service ->
-                    ServiceCard(
-                    service = service,
-                    rating = "%.1f".format(service.rating),
-                    price = service.price,
-                    onClick = { onNavigate(service.id) }
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                filtered.forEach { service ->
+                    FullWidthServiceCard(
+                        service = service,
+                        rating = "%.1f".format(service.rating),
+                        price = service.price,
+                        onClick = { onNavigate(service.id) }
+                    )
                 }
             }
         }
@@ -334,9 +331,9 @@ fun FeaturedServicesSection(searchQuery: String, onNavigate: (String) -> Unit) {
 }
 
 @Composable
-fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: () -> Unit) {
+fun FullWidthServiceCard(service: ServiceData, rating: String, price: String, onClick: () -> Unit) {
     JHCard(
-        modifier = Modifier.width(260.dp),
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -345,36 +342,45 @@ fun ServiceCard(service: ServiceData, rating: String, price: String, onClick: ()
                 contentDescription = service.category,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(140.dp)
                     .clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = service.title,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "by ${service.providerName}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(imageVector = Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFFBC02D))
-                Spacer(modifier = Modifier.width(2.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = rating,
-                    style = MaterialTheme.typography.labelSmall,
+                    text = service.title,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    maxLines = 1,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color(0xFFFBC02D))
+                    Spacer(modifier = Modifier.width(2.dp))
+                    Text(
+                        text = rating,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
-            // HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
-            // Spacer(modifier = Modifier.height(8.dp))
-            Text(text = service.category, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = JHPrimary)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "₹$price", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = service.category, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = JHPrimary)
+                Text(text = "₹$price", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+            }
         }
     }
 }

@@ -34,7 +34,8 @@ import com.project.jh.ui.theme.JHPrimary
 @Composable
 fun MyServicesScreen(
     onBack: () -> Unit,
-    onNavigateToPostService: () -> Unit
+    onNavigateToPostService: () -> Unit,
+    onDeleted: () -> Unit = {}
 ) {
     val auth = remember { FirebaseAuth.getInstance() }
     val db = remember { FirebaseFirestore.getInstance() }
@@ -118,6 +119,7 @@ fun MyServicesScreen(
                             db.collection("services").document(service.id).delete()
                                 .addOnSuccessListener {
                                     Toast.makeText(context, "Service deleted", Toast.LENGTH_SHORT).show()
+                                    onDeleted()
                                 }
                         }
                     )

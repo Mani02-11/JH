@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 fun ServiceDetailsScreen(
     serviceId: String? = null,
     onBack: () -> Unit,
+    onDeleted: () -> Unit = onBack,
     onRequest: (ServiceData) -> Unit
 ) {
     val db = remember { FirebaseFirestore.getInstance() }
@@ -105,7 +106,7 @@ fun ServiceDetailsScreen(
                                 db.collection("services").document(id).delete()
                                     .addOnSuccessListener {
                                         Toast.makeText(context, "Service deleted", Toast.LENGTH_SHORT).show()
-                                        onBack()
+                                        onDeleted()
                                     }
                             }
                         }) {

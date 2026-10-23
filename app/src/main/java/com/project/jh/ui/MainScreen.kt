@@ -55,6 +55,11 @@ fun MainScreen() {
             ServiceDetailsScreen(
                 serviceId = serviceId,
                 onBack = { navController.popBackStack() },
+                onDeleted = {
+                    navController.navigate("main") {
+                        popUpTo("main") { inclusive = true }
+                    }
+                },
                 onRequest = { service ->
                     val providerId = service.providerId.ifEmpty { service.providerUid }
                     if (service.id.isNotEmpty() && providerId.isNotEmpty()) {
@@ -92,7 +97,12 @@ fun MainScreen() {
         composable(Screen.MyServices.route) {
             MyServicesScreen(
                 onBack = { navController.popBackStack() },
-                onNavigateToPostService = { navController.navigate(Screen.PostSkill.route) }
+                onNavigateToPostService = { navController.navigate(Screen.PostSkill.route) },
+                onDeleted = {
+                    navController.navigate("main") {
+                        popUpTo("main") { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.EditProfile.route) { 
