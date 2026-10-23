@@ -119,7 +119,7 @@ fun HomeTopBar(onNavigate: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .padding(start = 12.dp)
-                    .size(46.dp) // Zoomed in to fill and fit circle perfectly
+                    .size(51.dp) // Zoomed in 10% from 46dp
                     .clip(CircleShape)
             )
         },
