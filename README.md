@@ -1,4 +1,5 @@
 # JustHire - "Find Skills. Hire Instantly. Get Things Done."
+https://appdistribution.firebase.dev/i/0e125f7695fa9a3a
 
 **JustHire** is a peer-to-peer student skill hiring and real-time messaging Android application. Built specifically for college campuses, it allows students to offer their unique skills, discover services provided by their peers, and seamlessly hire each other for specific tasks.
 
